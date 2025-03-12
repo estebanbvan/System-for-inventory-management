@@ -1,0 +1,61 @@
+import smtplib
+from email.mime.text import MIMEText
+
+# Список товаров на складе
+inventory = [
+    {"name": "Товар 1", "quantity": 50, "min_quantity": 10},
+    {"name": "Товар 2", "quantity": 30, "min_quantity": 5},
+    {"name": "Товар 3", "quantity": 100, "min_quantity": 20},
+]
+
+# Функция для отправки уведомлений
+def send_email(subject, body):
+    sender = "your_email@example.com"  # Ваш email
+    receiver = "receiver_email@example.com"  # Email получателя
+    password = "your_password"  # Ваш пароль
+
+    msg = MIMEText(body)
+    msg["Subject"] = subject
+    msg["From"] = sender
+    msg["To"] = receiver
+
+    try:
+        with smtplib.SMTP_SSL("smtp.example.com", 465) as server:
+            server.login(sender, password)
+            server.sendmail(sender, receiver, msg.as_string())
+        print("Email отправлен успешно")
+    except Exception as e:
+        print(f"Ошибка при отправке email: {e}")
+
+# Функция для обновления запасов
+def update_inventory(name, quantity, operation):
+    for item in inventory:
+        if item["name"] == name:
+            if operation == "поступление":
+                item["quantity"] += quantity
+                print(f"Поступление товара: {name}, количество: {quantity}")
+            elif operation == "продажа":
+                if item["quantity"] >= quantity:
+                    item["quantity"] -= quantity
+                    print(f"Продажа товара: {name}, количество: {quantity}")
+                else:
+                    print(f"Недостаточно товара: {name}")
+            
+            # Проверка на низкий уровень запасов
+            if item["quantity"] <= item["min_quantity"]:
+                send_email(f"Низкий уровень запасов для {name}",
+                           f"Запасы товара {name} на складе снизились до {item['quantity']}. Пожалуйста, пополните запасы.")
+            break
+
+# Функция для отображения текущих запасов
+def display_inventory():
+    print("Текущие запасы на складе:")
+    for item in inventory:
+        print(f"{item['name']} - {item['quantity']} (Минимум: {item['min_quantity']})")
+
+# Пример использования
+display_inventory()
+update_inventory("Товар 1", 20, "поступление")
+update_inventory("Товар 2", 25, "продажа")
+update_inventory("Товар 2", 5, "продажа")
+display_inventory()
